@@ -4,7 +4,6 @@ const router = express.Router();
 const {User} = require('../db')
 const jwt = require('jsonwebtoken');
 const {JWT_SECRET} = require('../config')
-const bcrypt = require("bcrypt")
 const {authMiddleware} = require('../middleware')
 
 const schema = zod.object({
@@ -24,6 +23,10 @@ const schema3 = zod.object({
     lastName: zod.string().optional(),
     password: zod.string().min(6).optional()
 })
+
+function getRandomNumber(max) {
+    return Math.floor(Math.random() * max);
+  }
 
 router.post('/signup', async function(req,res) {
     
@@ -52,7 +55,8 @@ router.post('/signup', async function(req,res) {
         username: usernameReq,
         firstName: firstNameReq,
         lastName : lastNameReq,
-        password : passwordReq
+        password : passwordReq,
+        balance: getRandomNumber(10000)
     });
 
     user.save();
