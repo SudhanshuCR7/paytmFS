@@ -1,7 +1,7 @@
 const express = require("express")
 const zod = require('zod');
 const router = express.Router();
-const {User} = require('../db')
+const {User,Account} = require('../db')
 const jwt = require('jsonwebtoken');
 const {JWT_SECRET} = require('../config')
 const {authMiddleware} = require('../middleware')
@@ -23,10 +23,6 @@ const schema3 = zod.object({
     lastName: zod.string().optional(),
     password: zod.string().min(6).optional()
 })
-
-function getRandomNumber(max) {
-    return Math.floor(Math.random() * max);
-  }
 
 router.post('/signup', async function(req,res) {
     
@@ -56,10 +52,16 @@ router.post('/signup', async function(req,res) {
         firstName: firstNameReq,
         lastName : lastNameReq,
         password : passwordReq,
-        balance: getRandomNumber(10000)
     });
 
     user.save();
+
+    const userId = user._id;
+
+    await Account.create({
+        userId,
+        balances: 1+ Math.random()*10000
+    }) 
 
     var token = jwt.sign({username : usernameReq},JWT_SECRET);
 
@@ -80,30 +82,48 @@ router.post('/signin',async function(req,res) {
           })
     }
 
-    const usernameReq = req.body.username;
-    const passwordReq = req.body.password;
-
-    const existingUser = await User.findOne( {username:usernameReq });
-
-
-    if(!existingUser)
-    {
-        res.send(411).json({
-            msg: "user does not exists"
-        })
-    }
- 
-    if(existingUser.password != passwordReq)
-    {
-        return res.status(400).json({ message: 'Invalid username or password' });
-    }
-
-    var token = jwt.sign({username : usernameReq},JWT_SECRET);
-    
-    res.status(200).json({ 
-        message: 'Login successful',
-        token: token 
+    const user = await User.findOne({
+        username: req.body.username,
+        password: req.body.password
     });
+
+    if (user) {
+        const token = jwt.sign({
+            userId: user._id
+        }, JWT_SECRET);
+  
+        res.json({
+            token: token
+        })
+        return;
+    }
+
+    res.status(411).json({
+        message: "Error while logging in"
+    })
+
+    // const usernameReq = req.body.username;
+    // const passwordReq = req.body.password;
+    // const existingUser = await User.findOne( {username:usernameReq });
+
+    // if(!existingUser)
+    // {
+    //     res.send(411).json({
+    //         msg: "user does not exists"
+    //     })
+    // }
+ 
+    // if(existingUser.password != passwordReq)
+    // {
+    //     return res.status(400).json({ message: 'Invalid username or password' });
+    // }
+
+    // var token = jwt.sign({username : usernameReq},JWT_SECRET);
+    
+    // res.status(200).json({ 
+    //     message: 'Login successful',
+    //     token: token 
+    // });
 
 })
 
