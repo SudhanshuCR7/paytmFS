@@ -30,7 +30,7 @@ router.post('/signup', async function(req,res) {
 
     if(!inpValRes.success)
     {
-      res.status(411).json({
+      return res.status(411).json({
         msg : "input is invalid"
       })
     }
@@ -77,7 +77,7 @@ router.post('/signin',async function(req,res) {
 
     if(!inpValRes.success)
     {
-          res.status(411).json({
+          return res.status(411).json({
             msg : "input is invalid"
           })
     }
