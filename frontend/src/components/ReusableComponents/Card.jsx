@@ -12,6 +12,11 @@ const Card = (props) => {
         password: ""
     })
 
+    const [signinFormData, setSigninFormData]= useState({
+        username: "",
+        password: ""
+    })
+
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
@@ -19,6 +24,11 @@ const Card = (props) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSignupFormData({ ...signupFormData, [name]: value });
+    };
+
+    const handleChangeSignIn = (e) => {
+        const { name, value } = e.target;
+        setSigninFormData({ ...signinFormData, [name]: value });
     };
 
     const handleSubmit = async (e) => {
@@ -49,7 +59,37 @@ const Card = (props) => {
           console.log("error "+ error);
         }
      
-     }
+    }
+
+    const handleSignInSubmit = async (e) => {
+       e.preventDefault();
+       setError('');
+
+       try { 
+        const response = await fetch("http://localhost:3000/api/v1/user/signin", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(signinFormData)
+        })
+
+        if(!response.ok){
+            const errorData = await response.json();
+            setError(errorData.msg || "Something went wrong");
+            throw new Error("Network respone was not ok");
+        }
+
+        const data = await response.json();
+        console.log("success", data);
+        navigate('/dashboard')
+
+       }
+       catch (error){
+        console.log("error",error)
+       }
+    }
+    
   
   return (
     <div className="flex items-center justify-center h-screen bg-gray-400">
@@ -58,7 +98,7 @@ const Card = (props) => {
         <h2 className="text-2xl font-extrabold text-center mb-6">{props.title}</h2>
         <h3 className='text-base font-medium text-center mb-6 text-gray-500'>{props.subTitle}</h3>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={props.isSignUp ? handleSubmit : handleSignInSubmit}>
             {props.isSignUp && <label className='block text-sm font-bold text-gray-700 mb-2'>First Name</label> }
             {props.isSignUp &&  
             <input
@@ -88,9 +128,9 @@ const Card = (props) => {
                 type="email"
                 placeholder="Email"
                 name="username"
-                value={signupFormData.username}
+                value={props.isSignUp ? signupFormData.username : signinFormData.username} 
                 required
-                onChange={handleChange}
+                onChange={props.isSignUp ? handleChange : handleChangeSignIn}
                 className="border border-gray-300 rounded-lg p-2 w-full mb-4"
             />
            
@@ -99,9 +139,9 @@ const Card = (props) => {
                 type="password"
                 placeholder="Password"
                 name="password"
-                value={signupFormData.password}
+                value={props.isSignUp ? signupFormData.password : signinFormData.password}
                 required
-                onChange={handleChange}
+                onChange={props.isSignUp ? handleChange : handleChangeSignIn}
                 className="border border-gray-300 rounded-lg p-2 w-full mb-4"
             />
             <button
